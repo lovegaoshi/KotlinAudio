@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
@@ -20,6 +21,7 @@ import androidx.core.app.NotificationCompat
 import coil.imageLoader
 import coil.request.Disposable
 import coil.request.ImageRequest
+import jp.wasabeef.transformers.coil.CropSquareTransformation
 import com.doublesymmetry.kotlinaudio.R
 import com.doublesymmetry.kotlinaudio.event.NotificationEventHolder
 import com.doublesymmetry.kotlinaudio.event.PlayerEventHolder
@@ -78,6 +80,7 @@ class NotificationManager internal constructor(
                 context.imageLoader.enqueue(
                     ImageRequest.Builder(context)
                         .data(artwork)
+                        .transformations(CropSquareTransformation())
                         .target { result ->
                             val resultBitmap = (result as BitmapDrawable).bitmap
                             holder?.artworkBitmap = resultBitmap
@@ -323,6 +326,8 @@ class NotificationManager internal constructor(
                 ): MediaDescriptionCompat {
                     val title = getTitle(windowIndex)
                     val artist = getArtist(windowIndex)
+                    val mediaItem = if (windowIndex == null) player.currentMediaItem else player.getMediaItemAt(windowIndex)
+                    val audioItemHolder = mediaItem?.getAudioItemHolder()
                     return MediaDescriptionCompat.Builder().apply {
                         setTitle(title)
                         setSubtitle(artist)
@@ -334,6 +339,9 @@ class NotificationManager internal constructor(
                                 putString(MediaMetadataCompat.METADATA_KEY_ARTIST, it)
                             }
                         })
+                        setIconUri(mediaItem?.mediaMetadata?.artworkUri ?: Uri.parse(audioItemHolder?.audioItem?.artwork
+                            ?: ""))
+                        setIconBitmap(audioItemHolder?.artworkBitmap)
                     }.build()
                 }
             }
