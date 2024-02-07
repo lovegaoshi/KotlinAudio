@@ -3,9 +3,11 @@ package com.doublesymmetry.kotlinaudio.players
 import android.content.Context
 import android.media.AudioManager
 import android.media.AudioManager.AUDIOFOCUS_LOSS
+import android.media.MediaMetadata as MediaMetadataA
 import android.net.Uri
 import android.os.Bundle
 import android.os.ResultReceiver
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -17,6 +19,7 @@ import androidx.media.AudioAttributesCompat.USAGE_MEDIA
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import androidx.media.AudioManagerCompat.AUDIOFOCUS_GAIN
+import androidx.media.utils.MediaConstants
 import com.doublesymmetry.kotlinaudio.event.EventHolder
 import com.doublesymmetry.kotlinaudio.event.NotificationEventHolder
 import com.doublesymmetry.kotlinaudio.event.PlayerEventHolder
@@ -386,6 +389,24 @@ abstract class BaseAudioPlayer internal constructor(
 
     public fun getMediaSessionToken(): MediaSessionCompat.Token {
         return mediaSession.sessionToken
+    }
+
+    public fun setPlaybackState(mediaID: String) {
+        // https://developer.android.com/training/cars/media#browse-progress-bar
+        mediaSession.setMetadata(
+            MediaMetadataCompat.Builder()
+                .putString(MediaMetadataA.METADATA_KEY_MEDIA_ID, "my-media-id")
+                // ...and any other setters.
+                .build())
+
+        val playbackStateExtras = Bundle()
+        playbackStateExtras.putString(
+            MediaConstants.PLAYBACK_STATE_EXTRAS_KEY_MEDIA_ID, "my-media-id")
+        mediaSession.setPlaybackState(
+            PlaybackStateCompat.Builder()
+                .setExtras(playbackStateExtras)
+                // ...and any other setters.
+                .build())
     }
 
     private fun createForwardingPlayer(): ForwardingPlayer {
