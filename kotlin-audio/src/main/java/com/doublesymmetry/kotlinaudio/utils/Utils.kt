@@ -1,8 +1,10 @@
-package com.doublesymmetry.kotlinaudio.utils
+@file: OptIn(UnstableApi::class) package com.doublesymmetry.kotlinaudio.utils
 
 import android.content.ContentResolver
 import android.net.Uri
-import com.google.android.exoplayer2.upstream.RawResourceDataSource
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.RawResourceDataSource
 
 fun isUriLocal(uri: Uri?): Boolean {
     if (uri == null) return false

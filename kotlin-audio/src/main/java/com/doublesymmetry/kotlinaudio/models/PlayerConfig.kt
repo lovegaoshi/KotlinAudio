@@ -1,7 +1,5 @@
 package com.doublesymmetry.kotlinaudio.models
 
-import com.doublesymmetry.kotlinaudio.players.BaseAudioPlayer
-
 data class PlayerConfig(
     /**
      * Toggle whether or not a player action triggered from an outside source should be intercepted.
