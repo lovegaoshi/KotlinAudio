@@ -43,6 +43,7 @@ import com.example.kotlin_audio_example.ui.component.ActionBottomSheet
 import com.example.kotlin_audio_example.ui.component.PlayerControls
 import com.example.kotlin_audio_example.ui.component.TrackDisplay
 import com.example.kotlin_audio_example.ui.theme.KotlinAudioTheme
+import com.example.kotlin_audio_example.MusicService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -52,6 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
     private lateinit var player: QueuedAudioPlayer
+
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,7 +173,7 @@ class MainActivity : ComponentActivity() {
                 NotificationButton.SEEK_TO
             ), accentColor = null, smallIcon = null, pendingIntent = null
         )
-        player.notificationManager.createNotification(notificationConfig)
+        // player.notificationManager.createNotification(notificationConfig)
     }
 
     companion object {

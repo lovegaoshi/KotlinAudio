@@ -91,7 +91,7 @@ import java.util.concurrent.TimeUnit
 ) : AudioManager.OnAudioFocusChangeListener {
     protected val exoPlayer: ExoPlayer
 
-    protected val mediaSession: MediaSession
+    val mediaSession: MediaSession
 
     private var cache: SimpleCache? = null
     private val scope = MainScope()
