@@ -27,6 +27,7 @@ import com.doublesymmetry.kotlinaudio.players.components.getAudioItemHolder
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.CommandButton
 import androidx.media3.ui.PlayerNotificationManager
 import androidx.media3.ui.PlayerNotificationManager.CustomActionReceiver
 import androidx.media3.session.MediaSession
@@ -395,6 +396,7 @@ class NotificationManager internal constructor(
         }
     }
 
+
     private val customActionReceiver = object : CustomActionReceiver {
         override fun createCustomActions(
             context: Context,
@@ -541,9 +543,38 @@ class NotificationManager internal constructor(
                     }
         }
         setupInternalNotificationManager(config)
+        mediaSession.setCustomLayout(getCustomButtons(config.buttons))
+    }
+    private fun getCustomButtons(newButtons: List<NotificationButton>): List<CommandButton> {
+
+        return newButtons.mapNotNull {
+            when (it) {
+                is NotificationButton.BACKWARD -> {
+                    CommandButton.Builder()
+                        .setPlayerCommand(Player.COMMAND_SEEK_BACK)
+                        .setIconResId(it.icon ?:  androidx.media3.ui.R.drawable.exo_ic_rewind)
+                        .build()
+                }
+                is NotificationButton.FORWARD -> {
+                    CommandButton.Builder()
+                        .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
+                        .setIconResId(it.icon ?:  androidx.media3.ui.R.drawable.exo_ic_forward)
+                        .build()
+                }
+                is NotificationButton.STOP -> {
+                    CommandButton.Builder()
+                        .setPlayerCommand(Player.COMMAND_STOP)
+                        .setIconResId(it.icon ?:  androidx.media3.ui.R.drawable.exo_icon_stop)
+                        .build()
+                }
+                else -> {
+                    null
+                }
+            }
+        }
     }
 
-    private fun isNotificationButtonsChanged(newButtons: List<NotificationButton>): Boolean {
+    fun isNotificationButtonsChanged(newButtons: List<NotificationButton>): Boolean {
         val currentNotificationButtonsMapByType = buttons.filterNotNull().associateBy { it::class }
         return newButtons.any { newButton ->
             when (newButton) {

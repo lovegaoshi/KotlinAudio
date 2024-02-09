@@ -1,4 +1,4 @@
-package com.example.kotlin_audio_example
+@file: UnstableApi package com.example.kotlin_audio_example
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Bundle
@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
 import com.doublesymmetry.kotlinaudio.models.AudioPlayerState
 import com.doublesymmetry.kotlinaudio.models.DefaultAudioItem
 import com.doublesymmetry.kotlinaudio.models.MediaSessionCallback
@@ -165,6 +166,8 @@ class MainActivity : ComponentActivity() {
                 NotificationButton.PLAY_PAUSE(),
                 NotificationButton.NEXT(isCompact = true),
                 NotificationButton.PREVIOUS(isCompact = true),
+                NotificationButton.BACKWARD(isCompact = true),
+                NotificationButton.FORWARD(isCompact = true),
                 NotificationButton.SEEK_TO
             ), accentColor = null, smallIcon = null, pendingIntent = null
         )

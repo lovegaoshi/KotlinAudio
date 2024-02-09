@@ -56,6 +56,7 @@ import androidx.media3.common.Player.Listener
 import androidx.media3.common.AudioAttributes
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.common.Metadata
+import androidx.media3.common.Rating
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.dash.DashMediaSource
 import androidx.media3.exoplayer.dash.DefaultDashChunkSource
@@ -73,6 +74,9 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -190,10 +194,32 @@ import java.util.concurrent.TimeUnit
             }
             .build()
 
-        mediaSession = MediaSession.Builder(context, exoPlayer).build()
 
         val playerToUse =
             if (playerConfig.interceptPlayerActionsTriggeredExternally) createForwardingPlayer() else exoPlayer
+
+        class Media3SessionCallback: MediaSession.Callback {
+            override fun onCustomCommand(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                customCommand: SessionCommand,
+                args: Bundle
+            ): ListenableFuture<SessionResult> {
+                Timber.tag("customCMD").d(args.toString())
+                return super.onCustomCommand(session, controller, customCommand, args)
+            }
+
+            override fun onSetRating(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                rating: Rating
+            ): ListenableFuture<SessionResult> {
+                playerEventHolder.updateOnPlayerActionTriggeredExternally(MediaSessionCallback.RATING(rating))
+                return super.onSetRating(session, controller, rating)
+            }
+        }
+
+        mediaSession = MediaSession.Builder(context, exoPlayer).setCallback(Media3SessionCallback()).build()
 
         notificationManager = NotificationManager(
             context,
