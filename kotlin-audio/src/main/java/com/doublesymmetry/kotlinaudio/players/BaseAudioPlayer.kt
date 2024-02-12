@@ -5,9 +5,6 @@ import android.media.AudioManager
 import android.media.AudioManager.AUDIOFOCUS_LOSS
 import android.net.Uri
 import android.os.Bundle
-import android.os.ResultReceiver
-import android.support.v4.media.RatingCompat
-import android.support.v4.media.session.MediaSessionCompat
 import androidx.annotation.CallSuper
 import androidx.core.content.ContextCompat
 import androidx.media.AudioAttributesCompat
@@ -89,7 +86,7 @@ import java.util.concurrent.TimeUnit
     private val bufferConfig: BufferConfig?,
     private val cacheConfig: CacheConfig?
 ) : AudioManager.OnAudioFocusChangeListener {
-    protected val exoPlayer: ExoPlayer
+    val exoPlayer: ExoPlayer
 
     val mediaSession: MediaSession
 

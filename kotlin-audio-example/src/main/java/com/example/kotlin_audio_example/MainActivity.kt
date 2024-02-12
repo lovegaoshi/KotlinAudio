@@ -1,9 +1,13 @@
 @file: UnstableApi package com.example.kotlin_audio_example
 
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.net.Uri
 import android.os.Bundle
+import android.os.IBinder
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,161 +24,50 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
-import com.doublesymmetry.kotlinaudio.models.AudioPlayerState
+import androidx.media3.session.SessionToken
+import com.doublesymmetry.kotlinaudio.PlayerController
 import com.doublesymmetry.kotlinaudio.models.DefaultAudioItem
-import com.doublesymmetry.kotlinaudio.models.MediaSessionCallback
 import com.doublesymmetry.kotlinaudio.models.MediaType
-import com.doublesymmetry.kotlinaudio.models.NotificationButton
-import com.doublesymmetry.kotlinaudio.models.NotificationConfig
-import com.doublesymmetry.kotlinaudio.models.RepeatMode
-import com.doublesymmetry.kotlinaudio.models.PlayerConfig
-import com.doublesymmetry.kotlinaudio.players.QueuedAudioPlayer
-import com.example.kotlin_audio_example.ui.component.ActionBottomSheet
 import com.example.kotlin_audio_example.ui.component.PlayerControls
 import com.example.kotlin_audio_example.ui.component.TrackDisplay
 import com.example.kotlin_audio_example.ui.theme.KotlinAudioTheme
-import com.example.kotlin_audio_example.MusicService
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
+
 
 class MainActivity : ComponentActivity() {
-    private lateinit var player: QueuedAudioPlayer
+    private lateinit var controller: PlayerController
 
-
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.plant(Timber.DebugTree())
         super.onCreate(savedInstanceState)
-
-        player = QueuedAudioPlayer(
-            this, playerConfig = PlayerConfig(
-                interceptPlayerActionsTriggeredExternally = true,
-                handleAudioBecomingNoisy = true,
-                handleAudioFocus = true
-            )
-        )
-        player.add(tracks)
-        player.playerOptions.repeatMode = RepeatMode.ALL
-        player.play()
-
-        setupNotification()
-
-        setContent {
-            val state = player.event.stateChange.collectAsState(initial = AudioPlayerState.IDLE)
-            var title by remember { mutableStateOf("") }
-            var artist by remember { mutableStateOf("") }
-            var artwork by remember { mutableStateOf("") }
-            var position by remember { mutableStateOf(0L) }
-            var duration by remember { mutableStateOf(0L) }
-            var isLive by remember { mutableStateOf(false) }
-
-            var showSheet by remember { mutableStateOf(false) }
-
-            if (showSheet) {
-                ActionBottomSheet(
-                    onDismiss = { showSheet = false },
-                    onRandomMetadata = {
-                        val currentIndex = player.currentIndex
-                        val track = tracks[currentIndex].copy(
-                            title = "Random Title - ${System.currentTimeMillis()}",
-                            artwork = "https://random.imagecdn.app/800/800?dummy=${System.currentTimeMillis()}",
-                        )
-                        player.replaceItem(currentIndex, track)
-                    }
+        val sessionToken =
+            SessionToken(this, ComponentName(this, MusicService::class.java))
+        controller = PlayerController(this, sessionToken)
+        val mediaController = controller.controller()
+        val mediaItem =
+            MediaItem.Builder()
+                .setMediaId("media-1")
+                .setUri("https://rntp.dev/example/Longing.mp3")
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setArtist("David Bowie")
+                        .setTitle("Heroes")
+                        .setArtworkUri(Uri.parse("https://rntp.dev/example/Longing.jpeg"))
+                        .build()
                 )
-            }
+                .build()
 
-            KotlinAudioTheme {
-                MainScreen(
-                    title = title,
-                    artist = artist,
-                    artwork = artwork,
-                    position = position,
-                    duration = duration,
-                    isLive = isLive,
-                    onPrevious = { player.previous() },
-                    onNext = { player.next() },
-                    isPaused = state.value != AudioPlayerState.PLAYING,
-                    onTopBarAction = { showSheet = true },
-                    onPlayPause = {
-                        if (player.playerState == AudioPlayerState.PLAYING) {
-                            player.pause()
-                        } else {
-                            player.play()
-                        }
-                    },
-                    onSeek = { player.seek(it, TimeUnit.MILLISECONDS) }
-                )
-            }
-
-            LaunchedEffect(key1 = player, key2 = player.event.audioItemTransition, key3 = player.event.onPlayerActionTriggeredExternally) {
-                player.event.audioItemTransition
-                    .onEach {
-                        title = player.currentItem?.title ?: ""
-                        artist = player.currentItem?.artist ?: ""
-                        artwork = player.currentItem?.artwork ?: ""
-                        duration =  player.currentItem?.duration ?: 0
-                        isLive = player.isCurrentMediaItemLive
-                    }
-                    .launchIn(this)
-
-                player.event.onPlayerActionTriggeredExternally
-                    .onEach {
-                        when (it) {
-                            MediaSessionCallback.PLAY -> player.play()
-                            MediaSessionCallback.PAUSE -> player.pause()
-                            MediaSessionCallback.NEXT -> player.next()
-                            MediaSessionCallback.PREVIOUS -> player.previous()
-                            MediaSessionCallback.STOP -> player.stop()
-                            is MediaSessionCallback.SEEK -> player.seek(
-                                it.positionMs,
-                                TimeUnit.MILLISECONDS
-                            )
-                            else -> Timber.d("Event not handled")
-                        }
-                    }
-                    .launchIn(this)
-            }
-
-            LaunchedEffect(Unit) {
-                while(true) {
-                    position = player.position
-                    duration = player.duration
-                    isLive = player.isCurrentMediaItemLive
-
-                    delay(1.seconds / 30)
-                }
-            }
-        }
+        mediaController.setMediaItem(mediaItem)
+        mediaController.prepare()
+        mediaController.play()
     }
 
-    private fun setupNotification() {
-        val notificationConfig = NotificationConfig(
-            listOf(
-                NotificationButton.PLAY_PAUSE(),
-                NotificationButton.NEXT(isCompact = true),
-                NotificationButton.PREVIOUS(isCompact = true),
-                NotificationButton.BACKWARD(isCompact = true),
-                NotificationButton.FORWARD(isCompact = true),
-                NotificationButton.SEEK_TO
-            ), accentColor = null, smallIcon = null, pendingIntent = null
-        )
-        // player.notificationManager.createNotification(notificationConfig)
-    }
 
     companion object {
         val tracks = listOf(
