@@ -351,11 +351,13 @@ class NotificationManager internal constructor(
                 ): MediaDescriptionCompat {
                     val title = getTitle(windowIndex)
                     val artist = getArtist(windowIndex)
+                    val album = getAlbumTitle(windowIndex)
                     val mediaItem = if (windowIndex == null) player.currentMediaItem else player.getMediaItemAt(windowIndex)
                     val audioItemHolder = mediaItem?.getAudioItemHolder()
                     return MediaDescriptionCompat.Builder().apply {
                         setTitle(title)
                         setSubtitle(artist)
+                        setDescription(album)
                         setExtras(Bundle().apply {
                             title?.let {
                                 putString(MediaMetadataCompat.METADATA_KEY_TITLE, it)
@@ -363,6 +365,9 @@ class NotificationManager internal constructor(
                             artist?.let {
                                 putString(MediaMetadataCompat.METADATA_KEY_ARTIST, it)
                                 putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, it)
+                            }
+                            album?.let {
+                                putString(MediaMetadataCompat.METADATA_KEY_ALBUM, it)
                             }
                         })
                         setIconUri(mediaItem?.mediaMetadata?.artworkUri ?: Uri.parse(audioItemHolder?.audioItem?.artwork
@@ -412,6 +417,7 @@ class NotificationManager internal constructor(
             }
             getAlbumTitle()?.let {
                 putString(MediaMetadataCompat.METADATA_KEY_ALBUM, it)
+                putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, it)
             }
             getMediaId()?.let {
                 putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, it)
